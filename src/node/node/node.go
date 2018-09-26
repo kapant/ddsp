@@ -95,7 +95,7 @@ func (node *Node) Put(k storage.RecordID, d []byte) error {
 // Del -- удалить запись из node, если запись для данного ключа
 // существует. Иначе вернуть ошибку storage.ErrRecordNotFound.
 func (node *Node) Del(k storage.RecordID) error {
-	// TODO: implement
+	// implemented
 	node.Lock()
 	defer node.Unlock()
 	_, ok := node.records[k]
