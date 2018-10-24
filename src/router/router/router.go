@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"storage"
+	"sync"
 )
 
 // Config stores configuration for a Router service.
@@ -32,6 +33,9 @@ type Config struct {
 // Router is a router service.
 type Router struct {
 	// TODO: implement
+	config Config
+	times map[storage.ServiceAddr]time.Time
+	sync.Mutex
 }
 
 // New creates a new Router with a given cfg.
@@ -43,7 +47,14 @@ type Router struct {
 // меньше чем storage.ReplicationFactor nodes.
 func New(cfg Config) (*Router, error) {
 	// TODO: implement
-	return nil, nil
+	if len(cfg.Nodes) < storage.ReplicationFactor {
+		return nil, storage.ErrNotEnoughDaemons
+	}
+	times := make(map[storage.ServiceAddr]time.Time);
+	for _, v := range cfg.Nodes {
+		times[v] = time.Now();
+	}
+	return &Router{config: cfg, times: times}, nil
 }
 
 // Hearbeat registers node in the router.
@@ -54,7 +65,17 @@ func New(cfg Config) (*Router, error) {
 // обслуживается Router.
 func (r *Router) Heartbeat(node storage.ServiceAddr) error {
 	// TODO: implement
-	return nil
+	r.Lock()
+	defer r.Unlock()
+
+	for _, v := range r.config.Nodes {
+		if v == node {
+			r.times[v] = time.Now();
+			return nil
+		}
+	}
+
+	return storage.ErrUnknownDaemon
 }
 
 // NodesFind returns a list of available nodes, where record with associated key k
@@ -66,7 +87,22 @@ func (r *Router) Heartbeat(node storage.ServiceAddr) error {
 // если меньше, чем storage.MinRedundancy найдено.
 func (r *Router) NodesFind(k storage.RecordID) ([]storage.ServiceAddr, error) {
 	// TODO: implement
-	return nil, nil
+	r.Lock()
+	defer r.Unlock()
+
+	nodes := r.config.NodesFinder.NodesFind(k, r.config.Nodes);
+	var av_nodes []storage.ServiceAddr;
+
+	for _, v := range nodes {
+		if time.Now().Sub(r.times[v]) < r.config.ForgetTimeout {
+			av_nodes = append(av_nodes, v);
+		}
+	}
+
+	if len(av_nodes) < storage.MinRedundancy {
+		return nil, storage.ErrNotEnoughDaemons
+	}
+	return av_nodes, nil
 }
 
 // List returns a list of all nodes served by Router.
@@ -74,5 +110,5 @@ func (r *Router) NodesFind(k storage.RecordID) ([]storage.ServiceAddr, error) {
 // List возвращает cписок всех node, обслуживаемых Router.
 func (r *Router) List() []storage.ServiceAddr {
 	// TODO: implement
-	return nil
+	return r.config.Nodes
 }

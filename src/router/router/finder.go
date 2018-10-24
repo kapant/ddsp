@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 
 	"storage"
+	"sort"
 )
 
 // Hasher is the common interface to compute hash for given k and node.
@@ -64,6 +65,7 @@ func (h *MD5) Hash(k storage.RecordID, node storage.ServiceAddr) uint64 {
 // на которых должна храниться запись с данным ключом.
 type NodesFinder struct {
 	// TODO: implement
+	hasher Hasher
 }
 
 // NewNodesFinder creates NodesFinder instance with given Hasher.
@@ -71,7 +73,7 @@ type NodesFinder struct {
 // NewNodesFinder создает NodesFinder с данным Hasher.
 func NewNodesFinder(h Hasher) NodesFinder {
 	// TODO: implement
-	return NodesFinder{}
+	return NodesFinder{hasher: h}
 }
 
 // NodesFind returns list of nodes where record with associated key k should be stored.
@@ -83,5 +85,31 @@ func NewNodesFinder(h Hasher) NodesFinder {
 // Возвращаемые nodes выбираются из передаваемых nodes.
 func (nf NodesFinder) NodesFind(k storage.RecordID, nodes []storage.ServiceAddr) []storage.ServiceAddr {
 	// TODO: implement
-	return nil
+	type hashNode struct {
+		addr storage.ServiceAddr
+		hash uint64
+	}	
+	var cands []hashNode;
+	for _, v := range nodes {
+		cands = append(cands, hashNode{v, nf.hasher.Hash(k, v)});
+	}
+
+	comp := func(i, j int) bool {
+		if cands[i].hash == cands[j].hash {
+			return cands[i].addr > cands[j].addr;
+		}
+		return cands[i].hash > cands[j].hash
+	}
+	sort.Slice(cands, comp);
+
+	l := len(cands);
+	if len(cands) > storage.ReplicationFactor {
+		l = storage.ReplicationFactor;
+	}
+
+	var res []storage.ServiceAddr;
+	for i := 0; i < l; i++ {
+		res = append(res, cands[i].addr);
+	}
+	return res
 }
