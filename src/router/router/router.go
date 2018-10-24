@@ -32,7 +32,7 @@ type Config struct {
 
 // Router is a router service.
 type Router struct {
-	// TODO: implement
+	// implemented
 	config Config
 	times map[storage.ServiceAddr]time.Time
 	sync.Mutex
@@ -46,7 +46,7 @@ type Router struct {
 // Возвращает ошибку storage.ErrNotEnoughDaemons если в cfg.Nodes
 // меньше чем storage.ReplicationFactor nodes.
 func New(cfg Config) (*Router, error) {
-	// TODO: implement
+	// implemented
 	if len(cfg.Nodes) < storage.ReplicationFactor {
 		return nil, storage.ErrNotEnoughDaemons
 	}
@@ -64,7 +64,7 @@ func New(cfg Config) (*Router, error) {
 // Возвращает ошибку storage.ErrUnknownDaemon если node не
 // обслуживается Router.
 func (r *Router) Heartbeat(node storage.ServiceAddr) error {
-	// TODO: implement
+	// implemented
 	r.Lock()
 	defer r.Unlock()
 
@@ -86,7 +86,7 @@ func (r *Router) Heartbeat(node storage.ServiceAddr) error {
 // запись с ключом k. Возвращает ошибку storage.ErrNotEnoughDaemons
 // если меньше, чем storage.MinRedundancy найдено.
 func (r *Router) NodesFind(k storage.RecordID) ([]storage.ServiceAddr, error) {
-	// TODO: implement
+	// implemented
 	r.Lock()
 	defer r.Unlock()
 
@@ -109,6 +109,6 @@ func (r *Router) NodesFind(k storage.RecordID) ([]storage.ServiceAddr, error) {
 //
 // List возвращает cписок всех node, обслуживаемых Router.
 func (r *Router) List() []storage.ServiceAddr {
-	// TODO: implement
+	// implemented
 	return r.config.Nodes
 }
