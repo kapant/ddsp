@@ -32,9 +32,8 @@ type Config struct {
 
 // Router is a router service.
 type Router struct {
-	// implemented
 	config Config
-	times map[storage.ServiceAddr]time.Time
+	times  map[storage.ServiceAddr]time.Time
 	sync.Mutex
 }
 
@@ -46,13 +45,13 @@ type Router struct {
 // Возвращает ошибку storage.ErrNotEnoughDaemons если в cfg.Nodes
 // меньше чем storage.ReplicationFactor nodes.
 func New(cfg Config) (*Router, error) {
-	// implemented
 	if len(cfg.Nodes) < storage.ReplicationFactor {
 		return nil, storage.ErrNotEnoughDaemons
 	}
-	times := make(map[storage.ServiceAddr]time.Time);
+	times := make(map[storage.ServiceAddr]time.Time)
+	start := time.Now()
 	for _, v := range cfg.Nodes {
-		times[v] = time.Now();
+		times[v] = start
 	}
 	return &Router{config: cfg, times: times}, nil
 }
@@ -64,15 +63,13 @@ func New(cfg Config) (*Router, error) {
 // Возвращает ошибку storage.ErrUnknownDaemon если node не
 // обслуживается Router.
 func (r *Router) Heartbeat(node storage.ServiceAddr) error {
-	// implemented
 	r.Lock()
 	defer r.Unlock()
 
-	for _, v := range r.config.Nodes {
-		if v == node {
-			r.times[v] = time.Now();
-			return nil
-		}
+	_, ok := r.times[node]
+	if ok {
+		r.times[node] = time.Now()
+		return nil
 	}
 
 	return storage.ErrUnknownDaemon
@@ -86,29 +83,28 @@ func (r *Router) Heartbeat(node storage.ServiceAddr) error {
 // запись с ключом k. Возвращает ошибку storage.ErrNotEnoughDaemons
 // если меньше, чем storage.MinRedundancy найдено.
 func (r *Router) NodesFind(k storage.RecordID) ([]storage.ServiceAddr, error) {
-	// implemented
 	r.Lock()
 	defer r.Unlock()
 
-	nodes := r.config.NodesFinder.NodesFind(k, r.config.Nodes);
-	var av_nodes []storage.ServiceAddr;
+	nodes := r.config.NodesFinder.NodesFind(k, r.config.Nodes)
+	var avNodes []storage.ServiceAddr
 
+	start = time.Now()
 	for _, v := range nodes {
-		if time.Now().Sub(r.times[v]) < r.config.ForgetTimeout {
-			av_nodes = append(av_nodes, v);
+		if start.Sub(r.times[v]) < r.config.ForgetTimeout {
+			avNodes = append(avNodes, v)
 		}
 	}
 
-	if len(av_nodes) < storage.MinRedundancy {
+	if len(avNodes) < storage.MinRedundancy {
 		return nil, storage.ErrNotEnoughDaemons
 	}
-	return av_nodes, nil
+	return avNodes, nil
 }
 
 // List returns a list of all nodes served by Router.
 //
 // List возвращает cписок всех node, обслуживаемых Router.
 func (r *Router) List() []storage.ServiceAddr {
-	// implemented
 	return r.config.Nodes
 }

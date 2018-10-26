@@ -64,7 +64,6 @@ func (h *MD5) Hash(k storage.RecordID, node storage.ServiceAddr) uint64 {
 // NodesFinder содержит методы и опции для нахождения узлов,
 // на которых должна храниться запись с данным ключом.
 type NodesFinder struct {
-	// implemented
 	hasher Hasher
 }
 
@@ -72,7 +71,6 @@ type NodesFinder struct {
 //
 // NewNodesFinder создает NodesFinder с данным Hasher.
 func NewNodesFinder(h Hasher) NodesFinder {
-	// implemented
 	return NodesFinder{hasher: h}
 }
 
@@ -84,7 +82,6 @@ func NewNodesFinder(h Hasher) NodesFinder {
 // Возвращается не больше чем storage.ReplicationFactor nodes.
 // Возвращаемые nodes выбираются из передаваемых nodes.
 func (nf NodesFinder) NodesFind(k storage.RecordID, nodes []storage.ServiceAddr) []storage.ServiceAddr {
-	// implemented
 	type hashNode struct {
 		addr storage.ServiceAddr
 		hash uint64
