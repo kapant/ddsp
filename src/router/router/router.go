@@ -89,7 +89,7 @@ func (r *Router) NodesFind(k storage.RecordID) ([]storage.ServiceAddr, error) {
 	nodes := r.config.NodesFinder.NodesFind(k, r.config.Nodes)
 	var avNodes []storage.ServiceAddr
 
-	start = time.Now()
+	start := time.Now()
 	for _, v := range nodes {
 		if start.Sub(r.times[v]) < r.config.ForgetTimeout {
 			avNodes = append(avNodes, v)
